@@ -1,7 +1,7 @@
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -12,10 +12,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class CandlestickMapper extends Mapper<Object, Text, LongWritable, FloatWritable> {
-    private Header columnIndices = null;
+public class CandlestickMapper extends Mapper<Object, Text, TimestampBinPair, FloatWritable> {
+    private static final Logger logger = Logger.getLogger(CandlestickMapper.class);
+    private Header header = null;
     private final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmssSSS");
-    private static final long binSize = 10000;
+    private static final long binSize = 10000; // in milliseconds
 
     private static class Header {
         public final int symbolIdx;
@@ -48,21 +49,22 @@ public class CandlestickMapper extends Mapper<Object, Text, LongWritable, FloatW
 
         while (lines.hasMoreTokens()) {
             List<String> values = Arrays.asList(lines.nextToken().split(","));
-            if (columnIndices == null) {
+            if (header == null) {
                 // Header row
-                columnIndices = new Header(values);
+                header = new Header(values);
+                logger.info(String.format("Header columns: symbol in %d, price in %d, moment in %d", header.symbolIdx, header.priceIdx, header.momentIdx));
             } else {
                 // Data row
                 try {
                     OperationRecord record = new OperationRecord(
-                            values.get(columnIndices.symbolIdx),
-                            dateFormat.parse(values.get(columnIndices.momentIdx)),
-                            Float.parseFloat(values.get(columnIndices.priceIdx))
+                            values.get(header.symbolIdx),
+                            dateFormat.parse(values.get(header.momentIdx)),
+                            Float.parseFloat(values.get(header.priceIdx))
                     );
 
                     // TODO: apply filters
                     long bin = record.ts.getTime() / binSize * binSize;
-                    context.write(new LongWritable(bin), new FloatWritable(record.dealPrice));
+                    context.write(new TimestampBinPair(bin, record.ts), new FloatWritable(record.dealPrice));
                 } catch (ParseException exc) {
                     throw new IllegalArgumentException("Failed to parse row", exc);
                 }

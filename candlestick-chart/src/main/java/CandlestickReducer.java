@@ -2,11 +2,16 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Date;
 
-public class CandlestickReducer extends Reducer<LongWritable, FloatWritable,LongWritable, Text> {
-    public void reduce(LongWritable key, Iterable<FloatWritable> prices, CandlestickReducer.Context context) throws IOException, InterruptedException {
+public class CandlestickReducer extends Reducer<TimestampBinPair, FloatWritable,LongWritable, Text> {
+    private static final Logger logger = Logger.getLogger(CandlestickMapper.class);
+
+    public void reduce(TimestampBinPair key, Iterable<FloatWritable> prices, CandlestickReducer.Context context) throws IOException, InterruptedException {
+        logger.info(String.format("Writing candle for %s", new Date(key.getBin().get()).toString()));
         Float high = null;
         Float low = null;
         Float open = null;
@@ -16,9 +21,8 @@ public class CandlestickReducer extends Reducer<LongWritable, FloatWritable,Long
             low = low == null ? price.get() : Math.min(low, price.get());
             open = open == null ? price.get() : open;
             close = price.get();
-            // TODO: sort by moment too so that open and close are correct
         }
 
-        context.write(key, new Text(String.format("open=%f, high=%f, low=%f, close=%f", open, high, low, close)));
+        context.write(key.getBin(), new Text(String.format("open=%f, high=%f, low=%f, close=%f", open, high, low, close)));
     }
 }

@@ -20,9 +20,11 @@ public class Application {
         job.setJarByClass(Application.class);
 
         job.setMapperClass(CandlestickMapper.class);
-        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputKeyClass(TimestampBinPair.class);
         job.setMapOutputValueClass(FloatWritable.class);
 
+        job.setPartitionerClass(TimestampBinPartitioner.class);
+        job.setGroupingComparatorClass(TimestampBinGroupingComparator.class);
         job.setReducerClass(CandlestickReducer.class);
         job.setOutputKeyClass(LongWritable.class);
         job.setOutputValueClass(Text.class);
