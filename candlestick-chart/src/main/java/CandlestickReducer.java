@@ -1,28 +1,26 @@
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.Date;
 
-public class CandlestickReducer extends Reducer<TimestampBinPair, FloatWritable,LongWritable, Text> {
+public class CandlestickReducer extends Reducer<CandlestickKey, FloatWritable, NullWritable, CandlestickDescription> {
     private static final Logger logger = Logger.getLogger(CandlestickMapper.class);
 
-    public void reduce(TimestampBinPair key, Iterable<FloatWritable> prices, CandlestickReducer.Context context) throws IOException, InterruptedException {
-        logger.info(String.format("Writing candle for %s", new Date(key.getBin().get()).toString()));
-        Float high = null;
-        Float low = null;
-        Float open = null;
-        Float close = null;
+    public void reduce(CandlestickKey key, Iterable<FloatWritable> prices, CandlestickReducer.Context context) throws IOException, InterruptedException {
+        logger.info(String.format("Writing candle for symbol=%s timestamp=%s", key.getSymbol(), key.getBin()));
+        float high = -1;
+        float low = -1;
+        float open = -1;
+        float close = -1;
         for (FloatWritable price: prices) {
-            high = high == null ? price.get() : Math.max(high, price.get());
-            low = low == null ? price.get() : Math.min(low, price.get());
-            open = open == null ? price.get() : open;
+            high = high == -1 ? price.get() : Math.max(high, price.get());
+            low = low == -1 ? price.get() : Math.min(low, price.get());
+            open = open == -1 ? price.get() : open;
             close = price.get();
         }
 
-        context.write(key.getBin(), new Text(String.format("open=%f, high=%f, low=%f, close=%f", open, high, low, close)));
+        context.write(null, new CandlestickDescription(key.getBin(), key.getSymbol(), open, close, high, low));
     }
 }

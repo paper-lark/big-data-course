@@ -1,36 +1,49 @@
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 
-public class Application {
-    public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration();
+public class Application extends Configured implements Tool {
+    public int run(String[] args) throws Exception {
+        Configuration conf = this.getConf();
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if (otherArgs.length != 2) {
-            System.err.println("Usage: candlestick <in> <out>");
+            System.err.println("Usage: candlestick [params] <in> <out>");
             System.exit(2);
         }
+        Path inputPath = new Path(otherArgs[0]);
+        Path outputPath = new Path(otherArgs[1]);
+
         Job job = new Job(conf, "candlestick-formatter");
         job.setJarByClass(Application.class);
+        job.setNumReduceTasks(conf.getInt("candle.num.reducers", 1));
 
         job.setMapperClass(CandlestickMapper.class);
-        job.setMapOutputKeyClass(TimestampBinPair.class);
+        job.setMapOutputKeyClass(CandlestickKey.class);
         job.setMapOutputValueClass(FloatWritable.class);
 
-        job.setPartitionerClass(TimestampBinPartitioner.class);
-        job.setGroupingComparatorClass(TimestampBinGroupingComparator.class);
+        job.setPartitionerClass(CandlestickPartitioner.class);
+        job.setGroupingComparatorClass(CandlestickGroupingComparator.class);
         job.setReducerClass(CandlestickReducer.class);
-        job.setOutputKeyClass(LongWritable.class);
-        job.setOutputValueClass(Text.class);
+        job.setOutputKeyClass(NullWritable.class);
+        job.setOutputValueClass(CandlestickDescription.class);
+        job.setOutputFormatClass(CandlestickOutputFormat.class);
 
-        FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
-        FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        FileInputFormat.addInputPath(job, inputPath);
+        FileOutputFormat.setOutputPath(job, outputPath);
+
+        return job.waitForCompletion(true) ? 0 : 1;
+    }
+
+    public static void main(String[] args) throws Exception {
+        int res = ToolRunner.run(new Configuration(), new Application(), args);
+        System.exit(res);
     }
 }
