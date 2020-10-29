@@ -4,12 +4,21 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
 public class CandlestickReducer extends Reducer<CandlestickKey, FloatWritable, NullWritable, CandlestickDescription> {
-    private static final Logger logger = Logger.getLogger(CandlestickMapper.class);
+    private static final Logger logger = Logger.getLogger(CandlestickReducer.class);
+    private final DateFormat printFormat = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss.SSS");
+
+    CandlestickReducer() {
+        printFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
 
     public void reduce(CandlestickKey key, Iterable<FloatWritable> prices, CandlestickReducer.Context context) throws IOException, InterruptedException {
-        logger.info(String.format("Writing candle for symbol=%s timestamp=%s", key.getSymbol(), key.getBin()));
+        logger.info(String.format("Writing candle for symbol=%s, timestamp=%s", key.getSymbol(), printFormat.format(key.getBin())));
+
         float high = -1;
         float low = -1;
         float open = -1;

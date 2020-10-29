@@ -16,7 +16,7 @@ public class CandlestickDescription implements WritableComparable<CandlestickDes
     public CandlestickDescription(Date ts, String symbol, float open, float close, float high, float low) {
         this.ts = new LongWritable(ts.getTime());
         this.open = new FloatWritable(open);
-        this.symbol = new Text(symbol); // FIXME: add to key for mapper
+        this.symbol = new Text(symbol);
         this.close = new FloatWritable(close);
         this.high = new FloatWritable(high);
         this.low = new FloatWritable(low);

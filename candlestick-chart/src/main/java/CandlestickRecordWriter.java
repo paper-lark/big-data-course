@@ -7,10 +7,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
 public class CandlestickRecordWriter extends RecordWriter<LongWritable, CandlestickDescription> {
     protected DataOutputStream out;
-    private final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmssSSS");
+    private final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
     private final byte[] recordSeparator;
     private final byte[] fieldSeparator;
 
@@ -18,6 +19,7 @@ public class CandlestickRecordWriter extends RecordWriter<LongWritable, Candlest
         this.out = out;
         this.fieldSeparator = fieldSeparator.getBytes(StandardCharsets.UTF_8);
         this.recordSeparator = recordSeparator.getBytes(StandardCharsets.UTF_8);
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     public CandlestickRecordWriter(DataOutputStream out) {

@@ -22,7 +22,7 @@
     </property>
     <property>
         <name>candle.time.to</name>
-        <value>2359</value>
+        <value>2000</value>
     </property>
     <property>
         <name>candle.num.reducers</name>
