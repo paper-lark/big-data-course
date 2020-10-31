@@ -3,6 +3,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -21,9 +22,10 @@ public class Application extends Configured implements Tool {
         Path inputPath = new Path(otherArgs[0]);
         Path outputPath = new Path(otherArgs[1]);
 
-        Job job = new Job(conf, "candlestick-formatter");
+        Job job = new Job(new JobConf(conf));
         job.setJarByClass(Application.class);
         job.setNumReduceTasks(conf.getInt("candle.num.reducers", 1));
+        job.setInputFormatClass(HeaderInputFormat.class);
 
         job.setMapperClass(CandlestickMapper.class);
         job.setMapOutputKeyClass(CandlestickKey.class);

@@ -7,7 +7,7 @@ public class InputFileHeader {
     public final int momentIdx;
     public final int dealIDIdx;
 
-    public InputFileHeader(List<String> header) throws IllegalArgumentException {
+    public InputFileHeader(String filename, List<String> header) throws IllegalArgumentException {
         symbolIdx = header.indexOf("#SYMBOL");
         priceIdx = header.indexOf("PRICE_DEAL");
         momentIdx = header.indexOf("MOMENT");
@@ -27,7 +27,7 @@ public class InputFileHeader {
             missingHeaders.add("ID_DEAL");
         }
         if (!missingHeaders.isEmpty()) {
-            throw new IllegalArgumentException(String.format("File does not contain required columns: %s", missingHeaders));
+            throw new IllegalArgumentException(String.format("File=%s does not contain required columns: %s", filename, missingHeaders));
         }
     }
 }

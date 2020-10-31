@@ -1,3 +1,4 @@
+import org.apache.commons.math3.util.Precision;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -32,18 +33,22 @@ public class CandlestickRecordWriter extends RecordWriter<LongWritable, Candlest
             this.out.write(fieldSeparator);
             this.out.write(dateFormat.format(value.getTimestamp()).getBytes(StandardCharsets.UTF_8));
             this.out.write(fieldSeparator);
-            this.out.write(String.format("%.1f", value.getOpen()).getBytes(StandardCharsets.UTF_8));
+            this.out.write(formatPrice(value.getOpen()).getBytes(StandardCharsets.UTF_8));
             this.out.write(fieldSeparator);
-            this.out.write(String.format("%.1f", value.getHigh()).getBytes(StandardCharsets.UTF_8));
+            this.out.write(formatPrice(value.getHigh()).getBytes(StandardCharsets.UTF_8));
             this.out.write(fieldSeparator);
-            this.out.write(String.format("%.1f", value.getLow()).getBytes(StandardCharsets.UTF_8));
+            this.out.write(formatPrice(value.getLow()).getBytes(StandardCharsets.UTF_8));
             this.out.write(fieldSeparator);
-            this.out.write(String.format("%.1f", value.getClose()).getBytes(StandardCharsets.UTF_8));
-            this.out.write(recordSeparator);//write custom record separator instead of NEW_LINE
+            this.out.write(formatPrice(value.getClose()).getBytes(StandardCharsets.UTF_8));
+            this.out.write(recordSeparator);
         }
     }
 
     public void close(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
         this.out.close();
+    }
+
+    private String formatPrice(double price) {
+        return String.format("%.1f", Precision.round(Precision.round(price, 2), 1));
     }
 }

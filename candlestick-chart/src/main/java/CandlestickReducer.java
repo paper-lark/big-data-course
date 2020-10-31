@@ -17,7 +17,7 @@ public class CandlestickReducer extends Reducer<CandlestickKey, FloatWritable, N
     }
 
     public void reduce(CandlestickKey key, Iterable<FloatWritable> prices, CandlestickReducer.Context context) throws IOException, InterruptedException {
-        logger.info(String.format("Writing candle for symbol=%s, timestamp=%s", key.getSymbol(), printFormat.format(key.getBin())));
+        logger.debug(String.format("Writing candle for symbol=%s, timestamp=%s", key.getSymbol(), printFormat.format(key.getBin())));
 
         float high = -1;
         float low = -1;
