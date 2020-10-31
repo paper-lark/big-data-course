@@ -1,6 +1,7 @@
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -11,9 +12,22 @@ import java.util.TimeZone;
 public class CandlestickReducer extends Reducer<CandlestickKey, FloatWritable, NullWritable, CandlestickDescription> {
     private static final Logger logger = Logger.getLogger(CandlestickReducer.class);
     private final DateFormat printFormat = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss.SSS");
+    private MultipleOutputs<NullWritable, CandlestickDescription> mos;
 
     CandlestickReducer() {
         printFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
+
+    @Override
+    protected void setup(Context context) throws IOException, InterruptedException {
+        super.setup(context);
+        mos = new MultipleOutputs<>(context);
+    }
+
+    @Override
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+        mos.close();
+        super.cleanup(context);
     }
 
     public void reduce(CandlestickKey key, Iterable<FloatWritable> prices, CandlestickReducer.Context context) throws IOException, InterruptedException {
@@ -30,6 +44,6 @@ public class CandlestickReducer extends Reducer<CandlestickKey, FloatWritable, N
             close = price.get();
         }
 
-        context.write(null, new CandlestickDescription(key.getBin(), key.getSymbol(), open, close, high, low));
+        mos.write("main", null, new CandlestickDescription(key.getBin(), key.getSymbol(), open, close, high, low), key.getSymbol());
     }
 }

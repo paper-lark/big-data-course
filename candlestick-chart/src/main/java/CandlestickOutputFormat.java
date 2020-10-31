@@ -11,9 +11,8 @@ import java.io.IOException;
 public class CandlestickOutputFormat extends FileOutputFormat<LongWritable, CandlestickDescription> {
     @Override
     public RecordWriter<LongWritable, CandlestickDescription> getRecordWriter(TaskAttemptContext job) throws IOException {
-        // TODO: write separate file for each symbol
-        String file_extension = ".csv";
-        Path file = getDefaultWorkFile(job, file_extension);
+        String ext = ".csv";
+        Path file = getDefaultWorkFile(job, ext);
         FileSystem fs = file.getFileSystem(job.getConfiguration());
         FSDataOutputStream fileOut = fs.create(file, false);
         return new CandlestickRecordWriter(fileOut);
