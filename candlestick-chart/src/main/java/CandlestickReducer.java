@@ -9,6 +9,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
+// FIXME: optimize mappers so that they return CandlestickDescription
+//   Then we can use reducers as combiners
 public class CandlestickReducer extends Reducer<CandlestickKey, FloatWritable, NullWritable, CandlestickDescription> {
     private static final Logger logger = Logger.getLogger(CandlestickReducer.class);
     private final DateFormat printFormat = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss.SSS");
