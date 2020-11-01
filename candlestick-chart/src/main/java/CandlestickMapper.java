@@ -1,5 +1,8 @@
+import models.CandlestickDescription;
+import models.CandlestickKey;
+import models.InputFileHeader;
+import models.InputRecord;
 import org.apache.commons.lang.time.DateUtils;
-import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
@@ -17,7 +20,7 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
-public class CandlestickMapper extends Mapper<Object, Text, CandlestickKey, FloatWritable> {
+public class CandlestickMapper extends Mapper<Object, Text, CandlestickKey, CandlestickDescription> {
     private static final Logger logger = Logger.getLogger(CandlestickMapper.class);
 
     private final DateFormat dateTimeFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
@@ -73,7 +76,7 @@ public class CandlestickMapper extends Mapper<Object, Text, CandlestickKey, Floa
             } else {
                 // Data row
                 try {
-                    InputOperationRecord record = new InputOperationRecord(
+                    InputRecord record = new InputRecord(
                             values.get(header.symbolIdx),
                             dateTimeFormat.parse(values.get(header.momentIdx)),
                             Float.parseFloat(values.get(header.priceIdx)),
@@ -90,7 +93,19 @@ public class CandlestickMapper extends Mapper<Object, Text, CandlestickKey, Floa
                     ) {
                         long binIdx = (record.ts.getTime() - date.getTime()) / binSize;
                         Date bin = new Date(date.getTime() + binIdx * binSize);
-                        context.write(new CandlestickKey(record.ts, bin, record.symbol, record.dealID), new FloatWritable(record.dealPrice));
+                        context.write(
+                                new CandlestickKey(bin, record.symbol),
+                                new CandlestickDescription(
+                                        record.ts,
+                                        record.dealID,
+                                        record.dealPrice,
+                                        record.ts,
+                                        record.dealID,
+                                        record.dealPrice,
+                                        record.dealPrice,
+                                        record.dealPrice
+                                )
+                        );
                     } else {
                         logger.debug(String.format("Skipping record at %s", printFormat.format(record.ts)));
                     }
