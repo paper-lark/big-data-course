@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+    <property>
+        <name>candle.width</name>
+        <value>1000</value>
+    </property>
+    <property>
+        <name>candle.num.reducers</name>
+        <value>64</value>
+    </property>
+</configuration>

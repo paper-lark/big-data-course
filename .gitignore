@@ -14,7 +14,6 @@
 .project
 .settings
 target
-output
 hadoop-common-project/hadoop-kms/downloads/
 hadoop-hdfs-project/hadoop-hdfs/downloads
 hadoop-hdfs-project/hadoop-hdfs-httpfs/downloads
@@ -174,3 +173,6 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 
 # End of https://www.toptal.com/developers/gitignore/api/maven,macos,intellij+all,apachehadoop,java
+
+input
+output
