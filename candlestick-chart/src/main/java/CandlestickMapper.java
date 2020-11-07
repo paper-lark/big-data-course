@@ -46,6 +46,7 @@ public class CandlestickMapper extends Mapper<Object, Text, CandlestickKey, Cand
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
+        logger.info("Mapper created");
         try {
             binSize = context.getConfiguration().getLong("candle.width", 300000);
             symbolRegex = Pattern.compile(context.getConfiguration().getStrings("candle.securities", ".*")[0], 0);
@@ -72,7 +73,6 @@ public class CandlestickMapper extends Mapper<Object, Text, CandlestickKey, Cand
             if (header == null) {
                 // Header row
                 header = new InputFileHeader(filename, values);
-                logger.info(String.format("Header columns in file=%s: symbol at %d, price at %d, moment at %d", filename, header.symbolIdx, header.priceIdx, header.momentIdx));
             } else {
                 // Data row
                 try {
@@ -110,10 +110,9 @@ public class CandlestickMapper extends Mapper<Object, Text, CandlestickKey, Cand
                         logger.debug(String.format("Skipping record at %s", printFormat.format(record.ts)));
                     }
                 } catch (ParseException exc) {
-                    throw new IllegalArgumentException("Failed to parse row", exc);
+                    logger.warn("Failed to parse row", exc);
                 }
             }
         }
-
     }
 }

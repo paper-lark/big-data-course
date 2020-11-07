@@ -5,11 +5,11 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.LazyOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
-import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
 
 
@@ -33,8 +33,8 @@ public class Application extends Configured implements Tool {
         Job job = new Job(conf);
         job.setJarByClass(Application.class);
         job.setNumReduceTasks(reduceCount);
-        job.setInputFormatClass(CandlestickInputFormat.class);
-        CandlestickInputFormat.addInputPath(job, inputPath);
+        job.setInputFormatClass(TextInputFormat.class);
+        TextInputFormat.addInputPath(job, inputPath);
 
         // mapper
         job.setMapperClass(CandlestickMapper.class);
@@ -42,7 +42,7 @@ public class Application extends Configured implements Tool {
         job.setMapOutputValueClass(CandlestickDescription.class);
 
         // reducer
-        if (conf.getBoolean("candle.use.combiners", false)) {
+        if (conf.getBoolean("candle.use.combiners", true)) {
             logger.info("Using combiners");
             job.setCombinerClass(CandlestickCombiner.class);
         }
@@ -51,8 +51,9 @@ public class Application extends Configured implements Tool {
         job.setOutputValueClass(CandlestickDescription.class);
 
         // output
+        // NOTE: following line prevents part-00000 files from being created
+        LazyOutputFormat.setOutputFormatClass(job, CandlestickOutputFormat.class);
         CandlestickOutputFormat.setOutputPath(job, outputPath);
-        LazyOutputFormat.setOutputFormatClass(job, CandlestickOutputFormat.class); // prevents part-00000 files from being created
         MultipleOutputs.addNamedOutput(
                 job,
                 "main",
@@ -62,10 +63,5 @@ public class Application extends Configured implements Tool {
         );
 
         return job.waitForCompletion(true) ? 0 : 1;
-    }
-
-    public static void main(String[] args) throws Exception {
-        int res = ToolRunner.run(new Configuration(), new Application(), args);
-        System.exit(res);
     }
 }
