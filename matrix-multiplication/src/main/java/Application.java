@@ -21,6 +21,10 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.log4j.Logger;
+import second_task.AggregateKey;
+import second_task.AggregateMapper;
+import second_task.AggregateOutputFormat;
+import second_task.AggregateReducer;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,14 +61,15 @@ public class Application extends Configured implements Tool {
         MatrixSize resultMatrixSize = new MatrixSize(firstMatrixSize.m, secondMatrixSize.n);
         writeSize(resultMatrixPath, resultMatrixSize);
 
-        // first job
+        // create job config
         JobConf jobConf = new JobConf(conf);
         jobConf.setJarByClass(Application.class);
+
+        // first job
         Job firstJob = Job.getInstance(jobConf, "mm-step-1");
         TextInputFormat.addInputPath(firstJob, getMatrixDataPath(firstMatrixPath));
         TextInputFormat.addInputPath(firstJob, getMatrixDataPath(secondMatrixPath));
         FileOutputFormat.setOutputPath(firstJob, intermediateResultPath);
-        firstJob.setJarByClass(Application.class);
         firstJob.setInputFormatClass(TextInputFormat.class);
         firstJob.setMapperClass(MatrixMapper.class);
         firstJob.setMapOutputKeyClass(MatrixMapperKey.class);
@@ -81,16 +86,17 @@ public class Application extends Configured implements Tool {
         }
 
         // second job
-        // TODO:
         Job secondJob = Job.getInstance(jobConf, "mm-step-2");
-        TextInputFormat.addInputPath(firstJob, intermediateResultPath);
-        FileOutputFormat.setOutputPath(firstJob, getMatrixDataPath(resultMatrixPath));
-        //        firstJob.setMapperClass(CandlestickMapper.class);
-        //        firstJob.setMapOutputKeyClass(CandlestickKey.class);
-        //        firstJob.setMapOutputValueClass(CandlestickDescription.class);
-        //        firstJob.setReducerClass(CandlestickReducer.class);
-        //        firstJob.setOutputKeyClass(CandlestickKey.class);
-        //        firstJob.setOutputValueClass(CandlestickDescription.class);
+        TextInputFormat.addInputPath(secondJob, intermediateResultPath);
+        AggregateOutputFormat.setOutputPath(secondJob, getMatrixDataPath(resultMatrixPath));
+        secondJob.setOutputFormatClass(AggregateOutputFormat.class);
+        secondJob.setMapperClass(AggregateMapper.class);
+        secondJob.setMapOutputKeyClass(AggregateKey.class);
+        secondJob.setMapOutputValueClass(DoubleWritable.class);
+        secondJob.setCombinerClass(AggregateReducer.class);
+        secondJob.setReducerClass(AggregateReducer.class);
+        secondJob.setOutputKeyClass(AggregateKey.class);
+        secondJob.setOutputValueClass(DoubleWritable.class);
 
         boolean isSuccess = secondJob.waitForCompletion(true);
         removeIntermediateResult(intermediateResultPath);

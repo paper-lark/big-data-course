@@ -1,5 +1,6 @@
 package first_task;
 
+import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
@@ -10,22 +11,22 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class MatrixMapperValue implements Writable {
-    private final Text matrixTag = new Text();
+    private final BooleanWritable isFirst = new BooleanWritable();
     private final IntWritable i = new IntWritable();
     private final IntWritable j = new IntWritable();
     private final DoubleWritable value = new DoubleWritable();
 
     public MatrixMapperValue() {}
 
-    public MatrixMapperValue(String matrixTag, int i, int j, double value) {
-        this.matrixTag.set(matrixTag);
+    public MatrixMapperValue(boolean isFirst, int i, int j, double value) {
+        this.isFirst.set(isFirst);
         this.i.set(i);
         this.j.set(j);
         this.value.set(value);
     }
 
-    public String getMatrixTag() {
-        return matrixTag.toString();
+    public boolean isFirstMatrix() {
+        return isFirst.get();
     }
 
     public int getI() {
@@ -42,7 +43,7 @@ public class MatrixMapperValue implements Writable {
 
     @Override
     public void write(DataOutput out) throws IOException {
-        matrixTag.write(out);
+        isFirst.write(out);
         i.write(out);
         j.write(out);
         value.write(out);
@@ -50,7 +51,7 @@ public class MatrixMapperValue implements Writable {
 
     @Override
     public void readFields(DataInput in) throws IOException {
-        matrixTag.readFields(in);
+        isFirst.readFields(in);
         i.readFields(in);
         j.readFields(in);
         value.readFields(in);
