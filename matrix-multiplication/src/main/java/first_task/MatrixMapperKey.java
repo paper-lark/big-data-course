@@ -22,6 +22,18 @@ public class MatrixMapperKey implements WritableComparable<MatrixMapperKey> {
         this.j.set(j);
     }
 
+    public int getGroupI() {
+        return groupI.get();
+    }
+
+    public int getGroupJ() {
+        return groupJ.get();
+    }
+
+    public int getGroupK() {
+        return groupK.get();
+    }
+
     public int getJ() {
         return j.get();
     }

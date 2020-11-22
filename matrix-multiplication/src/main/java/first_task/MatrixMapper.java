@@ -1,6 +1,7 @@
 package first_task;
 
 import models.AppConfiguration;
+import models.MatrixSize;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -17,11 +18,11 @@ public class MatrixMapper extends Mapper<LongWritable, Text, MatrixMapperKey, Ma
     private static final Logger logger = Logger.getLogger(MatrixMapper.class);
 
     private String firstMatrixTag = "";
-    private int firstMatrixIGroupSize = 0;
-    private int firstMatrixJGroupSize = 0;
+    private int firstRowGroupSize = 0;
+    private int firstColumnGroupSize = 0;
     private String secondMatrixTag = "";
-    private int secondMatrixIGroupSize = 0;
-    private int secondMatrixJGroupSize = 0;
+    private int secondRowGroupSize = 0;
+    private int secondColumnGroupSize = 0;
     private int groupCount = 0;
 
     @Override
@@ -31,18 +32,13 @@ public class MatrixMapper extends Mapper<LongWritable, Text, MatrixMapperKey, Ma
         firstMatrixTag = AppConfiguration.getFirstMatrixTag(context.getConfiguration());
         secondMatrixTag = AppConfiguration.getSecondMatrixTag(context.getConfiguration());
         groupCount = AppConfiguration.getGroupCount(context.getConfiguration());
+        MatrixSize firstSize = AppConfiguration.getFirstMatrixSize(context.getConfiguration());
+        MatrixSize secondSize = AppConfiguration.getSecondMatrixSize(context.getConfiguration());
 
-        int firstM = context.getConfiguration().getInt("matrix.first.m", 0);
-        int firstN = context.getConfiguration().getInt("matrix.first.n", 0);
-        int secondM = context.getConfiguration().getInt("matrix.second.m", 0);
-        int secondN = context.getConfiguration().getInt("matrix.second.n", 0);
-        if (firstM == 0 || firstN == 0 || secondM == 0 || secondN == 0) {
-            throw new IllegalArgumentException("One of matrix sizes is zero");
-        }
-        firstMatrixIGroupSize = (int) Math.ceil((float) firstM / groupCount);
-        firstMatrixJGroupSize = (int) Math.ceil((float) firstN / groupCount);
-        secondMatrixIGroupSize = (int) Math.ceil((float) secondM / groupCount);
-        secondMatrixJGroupSize = (int) Math.ceil((float) secondN / groupCount);
+        firstRowGroupSize = (int) Math.ceil((float) firstSize.m / groupCount);
+        firstColumnGroupSize = (int) Math.ceil((float) firstSize.m / groupCount);
+        secondRowGroupSize = (int) Math.ceil((float) secondSize.m / groupCount);
+        secondColumnGroupSize = (int) Math.ceil((float) secondSize.n / groupCount);
     }
 
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -70,13 +66,13 @@ public class MatrixMapper extends Mapper<LongWritable, Text, MatrixMapperKey, Ma
                 if (tag.equals(firstMatrixTag)) {
                     for (int k = 0; k < groupCount; k++) {
                         context.write(
-                                new MatrixMapperKey(i / firstMatrixIGroupSize, j / firstMatrixJGroupSize, k, j),
+                                new MatrixMapperKey(i / firstRowGroupSize, j / firstColumnGroupSize, k, j),
                                 new MatrixMapperValue(true, i, j, element));
                     }
                 } else if (tag.equals(secondMatrixTag)) {
                     for (int k = 0; k < groupCount; k++) {
                         context.write(
-                                new MatrixMapperKey(k, i / secondMatrixIGroupSize, j / secondMatrixJGroupSize, i),
+                                new MatrixMapperKey(k, i / secondRowGroupSize, j / secondColumnGroupSize, i),
                                 new MatrixMapperValue(false, i, j, element));
                     }
                 } else {

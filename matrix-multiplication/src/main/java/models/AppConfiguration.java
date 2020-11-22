@@ -11,6 +11,24 @@ public class AppConfiguration {
         return AppConfiguration.getMatrixTags(configuration).substring(1, 2);
     }
 
+    public static MatrixSize getFirstMatrixSize(Configuration configuration) {
+        int m = configuration.getInt("matrix.first.m", 0);
+        int n = configuration.getInt("matrix.first.n", 0);
+        if (m == 0 || n == 0) {
+            throw new IllegalArgumentException("One of first matrix dimensions is zero");
+        }
+        return new MatrixSize(m, n);
+    }
+
+    public static MatrixSize getSecondMatrixSize(Configuration configuration) {
+        int m = configuration.getInt("matrix.second.m", 0);
+        int n = configuration.getInt("matrix.second.n", 0);
+        if (m == 0 || n == 0) {
+            throw new IllegalArgumentException("One of second matrix dimensions is zero");
+        }
+        return new MatrixSize(m, n);
+    }
+
     public static String getResultMatrixTag(Configuration configuration) {
         return AppConfiguration.getMatrixTags(configuration).substring(2, 3);
     }
@@ -20,11 +38,7 @@ public class AppConfiguration {
     }
 
     public static int getGroupCount(Configuration configuration) {
-        int value = configuration.getInt("mm.groups", 0);
-        if (value == 0) {
-            throw new IllegalArgumentException("mm.groups is not specified");
-        }
-        return value;
+        return configuration.getInt("mm.groups", 1);
     }
 
     private static String getMatrixTags(Configuration configuration) {
