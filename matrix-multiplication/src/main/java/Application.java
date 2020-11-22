@@ -1,4 +1,11 @@
-import models.Size;
+import first_task.MatrixGroupingComparator;
+import first_task.MatrixMapper;
+import first_task.MatrixMapperKey;
+import first_task.MatrixMapperValue;
+import first_task.MatrixPartitioner;
+import first_task.MatrixReducer;
+import first_task.MatrixReducerKey;
+import models.MatrixSize;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -6,6 +13,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -29,15 +37,14 @@ public class Application extends Configured implements Tool {
             System.err.println("Usage: mm [params] <path_to_a> <path_to_b> <path_to_c>");
             System.exit(2);
         }
-        JobConf jobConf = new JobConf(conf);
         Path firstMatrixPath = new Path(otherArgs[0]);
         Path secondMatrixPath = new Path(otherArgs[1]);
         Path resultMatrixPath = new Path(otherArgs[2]);
         Path intermediateResultPath = getIntermediateResultPath(resultMatrixPath);
 
         // get input matrix sizes
-        Size firstMatrixSize = readSize(firstMatrixPath);
-        Size secondMatrixSize = readSize(secondMatrixPath);
+        MatrixSize firstMatrixSize = readSize(firstMatrixPath);
+        MatrixSize secondMatrixSize = readSize(secondMatrixPath);
         if (firstMatrixSize.n != secondMatrixSize.m) {
             throw new Exception(String.format("Cannot multiply matrices of size %s and %s", firstMatrixSize, secondMatrixSize));
         }
@@ -47,22 +54,26 @@ public class Application extends Configured implements Tool {
         conf.setInt("matrix.second.n", secondMatrixSize.n);
 
         // write output matrix size
-        Size resultMatrixSize = new Size(firstMatrixSize.m, secondMatrixSize.n);
+        MatrixSize resultMatrixSize = new MatrixSize(firstMatrixSize.m, secondMatrixSize.n);
         writeSize(resultMatrixPath, resultMatrixSize);
 
         // first job
+        JobConf jobConf = new JobConf(conf);
+        jobConf.setJarByClass(Application.class);
         Job firstJob = Job.getInstance(jobConf, "mm-step-1");
         TextInputFormat.addInputPath(firstJob, getMatrixDataPath(firstMatrixPath));
         TextInputFormat.addInputPath(firstJob, getMatrixDataPath(secondMatrixPath));
         FileOutputFormat.setOutputPath(firstJob, intermediateResultPath);
         firstJob.setJarByClass(Application.class);
         firstJob.setInputFormatClass(TextInputFormat.class);
-//        firstJob.setMapperClass(CandlestickMapper.class);
-//        firstJob.setMapOutputKeyClass(CandlestickKey.class);
-//        firstJob.setMapOutputValueClass(CandlestickDescription.class);
-//        firstJob.setReducerClass(CandlestickReducer.class);
-//        firstJob.setOutputKeyClass(CandlestickKey.class);
-//        firstJob.setOutputValueClass(CandlestickDescription.class);
+        firstJob.setMapperClass(MatrixMapper.class);
+        firstJob.setMapOutputKeyClass(MatrixMapperKey.class);
+        firstJob.setMapOutputValueClass(MatrixMapperValue.class);
+        firstJob.setPartitionerClass(MatrixPartitioner.class);
+        firstJob.setGroupingComparatorClass(MatrixGroupingComparator.class);
+        firstJob.setReducerClass(MatrixReducer.class);
+        firstJob.setOutputKeyClass(MatrixReducerKey.class);
+        firstJob.setOutputValueClass(DoubleWritable.class);
 
         if (!firstJob.waitForCompletion(true)) {
             logger.error("First step failed");
@@ -70,6 +81,7 @@ public class Application extends Configured implements Tool {
         }
 
         // second job
+        // TODO:
         Job secondJob = Job.getInstance(jobConf, "mm-step-2");
         TextInputFormat.addInputPath(firstJob, intermediateResultPath);
         FileOutputFormat.setOutputPath(firstJob, getMatrixDataPath(resultMatrixPath));
@@ -85,7 +97,7 @@ public class Application extends Configured implements Tool {
         return isSuccess ? 0 : 1;
     }
 
-    private Size readSize(Path pathToMatrix) throws Exception {
+    private MatrixSize readSize(Path pathToMatrix) throws Exception {
         Path sizePath = getMatrixSizePath(pathToMatrix);
         FileSystem fs = FileSystem.get(this.getConf());
 
@@ -97,13 +109,13 @@ public class Application extends Configured implements Tool {
         if (parts.length != 2) {
             throw new Exception(String.format("Matrix at %s size is incorrect", pathToMatrix));
         }
-        int rows = Integer.parseInt(parts[0]);
-        int columns = Integer.parseInt(parts[1]);
+        int rows = Integer.parseInt(parts[0].trim());
+        int columns = Integer.parseInt(parts[1].trim());
 
-        return new Size(rows, columns);
+        return new MatrixSize(rows, columns);
     }
 
-    private void writeSize(Path pathToMatrix, Size matrixSize) throws IOException {
+    private void writeSize(Path pathToMatrix, MatrixSize matrixSize) throws IOException {
         FileSystem fs = FileSystem.get(this.getConf());
         if(!fs.exists(pathToMatrix)) {
             fs.mkdirs(pathToMatrix);
@@ -112,14 +124,14 @@ public class Application extends Configured implements Tool {
 
         Path sizePath = getMatrixSizePath(pathToMatrix);
         FSDataOutputStream outputStream = fs.create(sizePath);
-        outputStream.writeBytes("" + matrixSize.m + "\t" + matrixSize.n);
+        outputStream.writeBytes("" + matrixSize.m + "\t" + matrixSize.n + "\n");
         outputStream.close();
         fs.close();
     }
 
-    private void removeIntermediateResult(Path pathTointermediateResult) throws IOException {
+    private void removeIntermediateResult(Path pathToIntermediateResult) throws IOException {
         FileSystem fs = FileSystem.get(getConf());
-        fs.delete(pathTointermediateResult, true);
+        fs.delete(pathToIntermediateResult, true);
         fs.close();
     }
 
