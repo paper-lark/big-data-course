@@ -22,6 +22,10 @@ public class MatrixMapperKey implements WritableComparable<MatrixMapperKey> {
         this.j.set(j);
     }
 
+    public int getJ() {
+        return j.get();
+    }
+
     public int primaryKeyHashCode() {
         return new Integer(groupI.get() + groupJ.get() + groupK.get()).hashCode();
     }
@@ -61,5 +65,15 @@ public class MatrixMapperKey implements WritableComparable<MatrixMapperKey> {
         groupJ.readFields(in);
         groupK.readFields(in);
         j.readFields(in);
+    }
+
+    @Override
+    public String toString() {
+        return "MatrixMapperKey{" +
+                "groupI=" + groupI.get() +
+                ", groupJ=" + groupJ.get() +
+                ", groupK=" + groupK.get() +
+                ", j=" + j.get() +
+                '}';
     }
 }

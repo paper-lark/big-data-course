@@ -23,10 +23,10 @@ public class MatrixReducer extends Reducer<MatrixMapperKey, MatrixMapperValue, M
         x.clear();
 
         for (MatrixMapperValue v: values) {
-            if (v.getJ() != currentJ && currentJ != -1) {
+            if (key.getJ() != currentJ) {
                 updateXElements();
             }
-            currentJ = v.getJ();
+            currentJ = key.getJ();
             if (v.isFirstMatrix()) {
                 rowToFirstValue.put(v.getI(), v.getValue());
             } else {

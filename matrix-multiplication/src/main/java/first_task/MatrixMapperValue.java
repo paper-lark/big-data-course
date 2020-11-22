@@ -56,4 +56,14 @@ public class MatrixMapperValue implements Writable {
         j.readFields(in);
         value.readFields(in);
     }
+
+    @Override
+    public String toString() {
+        return "MatrixMapperValue{" +
+                "isFirst=" + isFirst.get() +
+                ", i=" + i.get() +
+                ", j=" + j.get() +
+                ", value=" + value.get() +
+                '}';
+    }
 }
