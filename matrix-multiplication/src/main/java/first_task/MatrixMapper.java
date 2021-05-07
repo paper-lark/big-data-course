@@ -36,7 +36,7 @@ public class MatrixMapper extends Mapper<LongWritable, Text, MatrixMapperKey, Ma
         MatrixSize secondSize = AppConfiguration.getSecondMatrixSize(context.getConfiguration());
 
         firstRowGroupSize = (int) Math.ceil((float) firstSize.m / groupCount);
-        firstColumnGroupSize = (int) Math.ceil((float) firstSize.m / groupCount);
+        firstColumnGroupSize = (int) Math.ceil((float) firstSize.n / groupCount);
         secondRowGroupSize = (int) Math.ceil((float) secondSize.m / groupCount);
         secondColumnGroupSize = (int) Math.ceil((float) secondSize.n / groupCount);
     }
